@@ -1,0 +1,15 @@
+{
+  "name": "@forge/worker",
+  "version": "1.0.0",
+  "main": "src/index.js",
+  "scripts": {
+    "dev": "node --watch src/index.js",
+    "start": "node src/index.js"
+  },
+  "dependencies": {
+    "@forge/broker": "*",
+    "@forge/persistence": "*",
+    "@forge/metrics": "*",
+    "dotenv": "^16.4.5"
+  }
+}
