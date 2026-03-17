@@ -1,0 +1,12 @@
+{
+  "name": "@forge/persistence",
+  "version": "1.0.0",
+  "main": "src/index.js",
+  "scripts": {
+    "test": "echo ok"
+  },
+  "dependencies": {
+    "mongoose": "^8.3.4",
+    "uuid": "^9.0.1"
+  }
+}
