@@ -1,0 +1,12 @@
+{
+  "name": "@forge/metrics",
+  "version": "1.0.0",
+  "main": "src/index.js",
+  "scripts": {
+    "test": "echo ok"
+  },
+  "dependencies": {
+    "@forge/broker": "*",
+    "eventemitter3": "^5.0.1"
+  }
+}
