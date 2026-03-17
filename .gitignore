@@ -26,6 +26,9 @@ dist/
 build/
 coverage/
 packages/dashboard/dist/
+packages/dashboard/.gitignore
+packages/dashboard/README.md
+packages/dashboard/vite.config.js.timestamp-*.mjs
 
 # OS / editor
 .DS_Store
