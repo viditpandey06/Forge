@@ -6,6 +6,7 @@ const METRICS_CHANNEL = getRedisKey('metrics:events');
 
 function startSocketEmitter(io, intervalMs = 1000) {
   const subscriber = getRedisClient().duplicate();
+  subscriber.on('error', (err) => console.error('[Metrics Subscriber] Error:', err.message));
 
   subscriber.on('message', (_channel, message) => {
     try {

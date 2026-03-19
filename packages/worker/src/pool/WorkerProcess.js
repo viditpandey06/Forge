@@ -17,10 +17,8 @@ class WorkerProcess {
   }
 
   async start() {
-    console.log(`[Worker ${process.pid}] Started with concurrency ${this.concurrency}`);
-    for (let i = 0; i < this.concurrency; i++) {
-      this.loop(i);
-    }
+    console.log(`[Worker ${process.pid}] Started with polling loop (Concurrency: ${this.concurrency})`);
+    this.pollLoop();
   }
 
   async stop() {
@@ -32,16 +30,23 @@ class WorkerProcess {
     console.log(`[Worker ${process.pid}] Shutdown complete.`);
   }
 
-  async loop(loopId) {
+  async pollLoop() {
     while (!this.isShuttingDown) {
+      if (this.activeJobs >= this.concurrency) {
+        // We are at max concurrency, pause fetching
+        await new Promise((r) => setTimeout(r, 500));
+        continue;
+      }
+
       try {
         const item = await priorityQueue.dequeue(5); // 5 sec block
         if (!item) continue;
 
         const [queue, jobId] = item;
-        await this.processJob(jobId);
+        // Start processing WITHOUT awaiting, to fetch the next job immediately!
+        this.processJob(jobId).catch(err => console.error(`[Worker ${process.pid}] Job error:`, err));
       } catch (err) {
-        console.error(`[Worker ${process.pid} Loop ${loopId}] Loop error:`, err);
+        console.error(`[Worker ${process.pid}] Polling error:`, err.message);
         await new Promise((r) => setTimeout(r, 1000));
       }
     }

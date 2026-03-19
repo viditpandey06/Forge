@@ -69,6 +69,8 @@ function getBlockingRedisClient() {
             maxRetriesPerRequest: null,
             enableReadyCheck: true,
           });
+    blockingClient.on('connect', () => console.log('[Redis Blocking] Connected'));
+    blockingClient.on('error', (err) => console.error('[Redis Blocking] Error:', err.message));
   }
   return blockingClient;
 }
