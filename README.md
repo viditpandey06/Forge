@@ -1,27 +1,21 @@
-# Forge
-## Distributed Task Queue Engine with Priority Scheduling, Retries, DLQ Handling, and Live Observability
+# ⚡ Forge: Distributed Task Queue Engine
 
-Forge is a backend infrastructure project built to demonstrate practical distributed systems engineering in Node.js.
+[![Live Demo](https://img.shields.io/badge/Live_Dashboard-forge.viditpandey.in-00E676?style=for-the-badge)](https://forge.viditpandey.in)
+[![Developer](https://img.shields.io/badge/Developer-Vidit_Pandey-007EC6?style=for-the-badge)](https://viditpandey.in)
 
-It models the core pieces of a production-style async job platform:
+> **A high-performance, distributed background task queue engine modeled after enterprise execution systems.**
 
-- a producer API for job submission
-- a Redis-backed broker with priority and delay semantics
-- a clustered worker pool for concurrent execution
-- MongoDB-backed lifecycle persistence
-- retry and dead-letter handling for failure recovery
-- a live React dashboard for operational visibility
+Forge is a scalable, resilient async job platform built rigorously on **Node.js, Redis, and MongoDB**. It solves the hardest parts of distributed background processing—concurrency orchestration, network fallacies, and recovery—giving developers a drop-in execution layer complete with beautiful real-time operational observability.
 
-This project was designed as a portfolio artifact for recruiters and interviewers evaluating backend, systems, and infrastructure engineering ability.
+This project was intentionally architected as a **portfolio artifact** for engineering leaders, technical recruiters, and interviewers evaluating backend, systems, and infrastructure engineering ability.
 
 ---
 
-## Copyright and Usage Warning
+## 🛑 Copyright and Usage Warning
 
-**Copyright 2026 Vidit Pandey. All Rights Reserved.**
+**Copyright © 2026 Vidit Pandey. All Rights Reserved.**
 
 This repository is provided strictly for **portfolio review and technical evaluation**.
-
 - **DO NOT** copy this project and present it as your own work.
 - **DO NOT** reuse this codebase for assignments, portfolio submissions, freelance work, or commercial use.
 - **DO NOT** redistribute, re-license, or republish this repository in whole or in part.
@@ -31,236 +25,66 @@ If you are a recruiter, interviewer, or hiring manager, you are welcome to inspe
 
 ---
 
-## Project Snapshot
+## 🚀 Key Enterprise Capabilities
 
-Forge demonstrates:
+Forge doesn't just execute code; it guarantees execution predictability under heavy volatility.
 
-- asynchronous job processing
-- Redis queue design
-- delayed execution with sorted sets
-- exponential backoff retry logic with jitter
-- dead-letter queue handling
-- MongoDB lifecycle persistence
-- worker concurrency and orchestration
-- live metrics streaming through Socket.io
-- dashboard-driven system observability
+*   **Priority Routing:** Urgent jobs dynamically jump the queue and bypass standard traffic.
+*   **Delayed & Scheduled Execution:** Time-lock jobs in Redis Sorted Sets until exact execution timestamps.
+*   **Self-Healing Fault Tolerance:** Transient failures trigger isolated exponential backoff retries with jitter to prevent network retry storms.
+*   **Dead-Letter Queue (DLQ) Quarantining:** Poison messages and permanently failed jobs are safely surgically isolated for manual inspection.
+*   **Live Observability Telemetry:** Every Node.js worker streams millisecond-perfect telemetry (throughput, latency percentiles, queue depths) down to a React dashboard via Socket.io.
 
-This is the kind of project that helps answer interview questions such as:
-
-- How would you design a background job processing system?
-- How do you handle retries and poison messages?
-- How do you prioritize urgent work?
-- How do you recover from worker crashes?
-- How do you observe queue throughput and latency in real time?
+> **Interview Context:** *This architecture provides concrete answers to complex distributed systems interview questions like: "How do you recover from worker crashes during a transaction?", "How do you handle poison messages without blocking a queue?", and "How do you observe horizontal cluster throughput in real-time?"*
 
 ---
 
-## Architecture
+## 🏗️ Architecture Stack
 
-Forge follows a producer-broker-consumer model with dedicated persistence and observability layers.
+Forge follows a strict producer-broker-consumer monorepo model with dedicated persistence and observability layers.
 
-### Producer Layer
+### 1. Producer Layer (`@forge/api`)
+The Express API gatekeeper. Validates incoming HTTP payloads, enforces generic sliding-window rate limits, safely persists the initial payload lifecycle to MongoDB, and strips heavy data to push purely lightweight Job IDs into Redis.
 
-- `Express API`
-- validates job requests
-- applies rate limiting
-- stores jobs in MongoDB
-- enqueues job ids into Redis
+### 2. Broker Layer (`@forge/broker`)
+The Redis routing engine. Orchestrates high/default priority lists, Sorted Set delay queues, and sliding-window limits. It also acts as the ultra-fast Pub/Sub nervous system for broadcasting cluster metrics.
 
-### Broker Layer
+### 3. Execution Layer (`@forge/worker`)
+The clustered Node.js execution engine. Workers run controlled sequential Redis pulling loops to safely max out asynchronous concurrency without tripping PaaS connection limits. They atomically claim jobs, execute isolated handler logic, and calculate programmatic delays automatically upon failure.
 
-- `Redis`
-- high-priority queue
-- default-priority queue
-- delay queue using sorted sets
-- dead-letter queue
-- sliding-window rate limiter
-- pub/sub channel for metrics events
+### 4. Persistence Layer (`@forge/persistence`)
+MongoDB Atlas acts as the durable system of record. Every payload, attempt counter, execution timestamp, and final result/error stack trace is durably stored here so State is never lost in transit.
 
-### Worker Layer
-
-- `Node.js clustered workers`
-- claims pending jobs atomically
-- executes handlers with timeout protection
-- retries transient failures
-- moves permanent failures into DLQ
-
-### Persistence Layer
-
-- `MongoDB Atlas`
-- durable system of record for job state
-- stores payload, attempts, timestamps, result, and error context
-
-### Observability Layer
-
-- `Socket.io + React`
-- queue depth
-- throughput
-- latency percentiles
-- recent activity feed
-- worker utilization
+### 5. Observability UI (`packages/dashboard`)
+A stunning Vite + React telemetry dashboard. Subscribes securely directly to the API's WebSocket tunnel to graph live queue depths and P50/P99 latency without querying the database.
 
 ---
 
-## Key Design Decisions
+## ⚙️ Running Locally
 
-### MongoDB Is the Source of Truth
+The entire distributed cluster can be launched seamlessly via a custom monorepo orchestration script.
 
-Forge writes each job to MongoDB before pushing the job id into Redis. Redis acts as the fast broker; MongoDB stores the authoritative lifecycle state.
+```bash
+# Clone and install dependencies
+git clone https://github.com/viditpandey06/Forge.git
+npm install
 
-### Redis Stores Job IDs, Not Payloads
-
-Only job ids are placed into Redis queues. This keeps the broker lightweight and centralizes full state, result data, and auditing in MongoDB.
-
-### Priority Scheduling
-
-Workers consume from the high-priority queue before the default queue so urgent jobs drain first.
-
-### Delayed Jobs
-
-Delayed jobs are placed into a Redis sorted set and moved back into active queues once their scheduled time arrives.
-
-### Retry with Jitter
-
-Failed jobs use exponential backoff with jitter to prevent synchronized retry storms.
-
-### At-Least-Once Delivery
-
-Forge favors durability and recoverability over exactly-once semantics. Handlers should ideally be idempotent.
-
-### Safe Shared Redis Usage
-
-Forge supports a configurable `REDIS_PREFIX`, allowing multiple applications or environments to share one Redis instance without key collisions.
-
----
-
-## End-to-End Flow
-
-1. A client submits `POST /jobs`.
-2. The API validates the request and applies Redis-based rate limiting.
-3. The API persists the job to MongoDB as `PENDING`.
-4. The API pushes the job id into Redis or schedules it into the delay queue.
-5. A worker pops the job id from Redis.
-6. The worker atomically claims the job in MongoDB by moving it to `PROCESSING`.
-7. The handler executes with timeout protection.
-8. On success, the job becomes `COMPLETED`.
-9. On transient failure, the job is scheduled for retry with backoff.
-10. On permanent failure, the job moves to the dead-letter queue.
-11. Workers publish metrics events through Redis pub/sub.
-12. The API emits live dashboard updates through Socket.io.
-
----
-
-## Repository Structure
-
-```text
-forge/
-├── packages/
-│   ├── api/          # Express producer API
-│   ├── broker/       # Redis queue, delay queue, DLQ, rate limiter
-│   ├── dashboard/    # React observability UI
-│   ├── metrics/      # Metrics collector and Socket.io emitter
-│   ├── persistence/  # MongoDB models and repositories
-│   └── worker/       # Worker pool, handlers, retries
-├── benchmark/        # Load generation CLI
-├── docker-compose.yml
-├── package.json
-└── README.md
-```
-
----
-
-## API Surface
-
-### `POST /jobs`
-
-Create a new background job.
-
-### `GET /jobs/:id`
-
-Fetch a job's status, result, and metadata.
-
-### `GET /jobs`
-
-List jobs with filter support.
-
-### `POST /jobs/:id/retry`
-
-Manually retry a failed or DLQ job.
-
-### `DELETE /jobs/:id`
-
-Cancel a pending job.
-
-### `GET /health`
-
-Check MongoDB and Redis connectivity.
-
-### `GET /metrics`
-
-Return the live metrics snapshot used by the dashboard.
-
----
-
-## Current Stack
-
-- `Node.js`
-- `Express`
-- `Redis`
-- `MongoDB Atlas`
-- `Socket.io`
-- `React + Vite`
-- `ioredis`
-- `Mongoose`
-
----
-
-## Running the Project
-
-From the project root:
-
-```powershell
+# Start the API, Worker Pool, and Dashboard concurrently
 npm run dev
 ```
-
-This starts:
-
-- API server
-- worker pool
-- dashboard
-
-Typical endpoints:
-
-- API health: `http://localhost:3000/health`
-- dashboard: `http://localhost:5173`
-
-If Vite detects a port conflict, it may start on another nearby port such as `5174`.
+*   **API Health:** `http://localhost:3000/health`
+*   **Dashboard:** `http://localhost:5173`
 
 ---
 
-## Benchmark
+## 🧪 Load Testing & Benchmarking
 
-Forge includes a load-generation CLI for queue stress testing.
+Forge includes a highly efficient, bypass-API load-generation CLI used for aggressive stress testing the Redis ingestion speeds and Worker execution tracking logic.
 
-Example:
-
-```powershell
-npm run benchmark -- --jobs 1000 --concurrency 20
+```bash
+npm run benchmark -- --jobs 5000 --concurrency 50
 ```
 
 ---
 
-## Security and Portfolio Notes
-
-- runtime secrets are intentionally excluded from version control
-- hosted infrastructure credentials should be rotated if ever exposed
-- this repository is published for review, not reuse
-- the codebase should be treated as read-only portfolio material
-
----
-
-## Author
-
-Vidit Pandey
-
-Backend and distributed systems portfolio project built for technical evaluation.
+*Designed and engineered by [Vidit Pandey](https://viditpandey.in).*
