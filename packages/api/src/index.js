@@ -56,6 +56,44 @@ async function start() {
   // Start Socket.io metrics emitter (1s interval)
   startSocketEmitter(io, 1000);
 
+  // --- Ghost Traffic Generator For Portfolio ---
+  // Every 2 seconds, gently add 2-3 jobs if the queue is quiet
+  setInterval(async () => {
+    try {
+      const { getRedisKey } = require('@forge/broker/src/keys');
+      const { JobModel } = require('@forge/persistence');
+      const crypto = require('crypto');
+      const redis = getRedisClient();
+
+      // Only add jobs if the queue depth is low so we don't accidentally overload it forever
+      const depth = await redis.llen(getRedisKey('queue:default'));
+      if (depth < 100) {
+        const docs = [];
+        const redisPipeline = redis.pipeline();
+        
+        for (let i = 0; i < 3; i++) {
+          const _id = crypto.randomUUID();
+          docs.push({
+            _id,
+            type: 'email:send',
+            payload: { to: 'ghost@example.com', note: 'Ghost Traffic' },
+            priority: 'DEFAULT',
+            status: 'PENDING',
+            attempts: 0,
+            max_attempts: 3,
+            run_at: new Date(),
+          });
+          redisPipeline.lpush(getRedisKey('queue:default'), _id);
+        }
+
+        await JobModel.insertMany(docs, { ordered: false });
+        await redisPipeline.exec();
+      }
+    } catch(err) {
+      // ignore ghost traffic errors
+    }
+  }, 2000);
+
   server.listen(PORT, () => {
     console.log(`[Forge API] Listening on http://localhost:${PORT}`);
     console.log(`[Forge API] Health → http://localhost:${PORT}/health`);
