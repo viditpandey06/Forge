@@ -50,7 +50,8 @@ function App() {
   const handleSimulateLoad = async () => {
     setIsSimulating(true);
     try {
-      await fetch(`${API_URL}/jobs/bulk`, {
+      const baseUrl = API_URL.replace(/\/$/, '');
+      await fetch(`${baseUrl}/jobs/bulk`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ count: 1000 })
