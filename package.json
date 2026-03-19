@@ -8,12 +8,12 @@
   ],
   "scripts": {
     "dev": "concurrently \"npm run dev -w packages/api\" \"npm run dev -w packages/worker\" \"npm run dev -w packages/dashboard\"",
+    "start": "concurrently \"npm run start -w packages/api\" \"npm run start -w packages/worker\"",
     "docker:up": "docker compose up -d",
     "docker:down": "docker compose down",
     "benchmark": "node benchmark/src/index.js"
   },
   "devDependencies": {
-    "@rolldown/binding-win32-x64-msvc": "^1.0.0-rc.9",
     "concurrently": "^8.2.2"
   }
 }
