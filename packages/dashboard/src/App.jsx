@@ -7,7 +7,40 @@ import { JobFeed } from './components/JobFeed';
 import { Activity, Zap } from 'lucide-react';
 import './App.css';
 
-const socket = io('http://localhost:3000');
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+const socket = io(API_URL);
+
+function Preloader() {
+  const messages = [
+    "Connecting to Forge API...",
+    "Waking up Render backend (this takes ~50s on free tiers)...",
+    "Heating the queue engine...",
+    "Setting up the server...",
+    "Connecting to worker pool...",
+    "Establishing Redis streams..."
+  ];
+  const [msgIndex, setMsgIndex] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setMsgIndex((prev) => (prev + 1) % messages.length);
+    }, 4500);
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <div className="flex flex-col h-screen items-center justify-center bg-gray-950 text-white space-y-6">
+      <div className="flex items-center text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-emerald-400">
+        <Activity className="animate-spin text-blue-500 mr-3 w-10 h-10" />
+        Forge
+      </div>
+      <p className="text-emerald-400 font-mono tracking-widest text-sm animate-pulse">{messages[msgIndex]}</p>
+      <p className="text-xs text-gray-600 max-w-sm text-center">
+        Note: The backend is hosted on Render's free tier, which sleeps after 15 minutes of inactivity. Please allow up to a minute for the initial cold start!
+      </p>
+    </div>
+  );
+}
 
 function App() {
   const [metrics, setMetrics] = useState(null);
@@ -17,7 +50,7 @@ function App() {
   const handleSimulateLoad = async () => {
     setIsSimulating(true);
     try {
-      await fetch('http://localhost:3000/jobs/bulk', {
+      await fetch(`${API_URL}/jobs/bulk`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ count: 1000 })
@@ -46,12 +79,7 @@ function App() {
   }, []);
 
   if (!metrics) {
-    return (
-      <div className="flex h-screen items-center justify-center bg-gray-900 text-white">
-        <Activity className="animate-spin text-blue-500 mr-3" />
-        Connecting to Forge...
-      </div>
-    );
+    return <Preloader />;
   }
 
   return (
