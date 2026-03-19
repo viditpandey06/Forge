@@ -4,7 +4,7 @@ import { QueueDepthCard } from './components/QueueDepthCard';
 import { LatencyCard } from './components/LatencyCard';
 import { ThroughputChart } from './components/ThroughputChart';
 import { JobFeed } from './components/JobFeed';
-import { Activity, Zap } from 'lucide-react';
+import { Activity, Zap, ExternalLink } from 'lucide-react';
 import './App.css';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
@@ -35,7 +35,7 @@ function Preloader() {
         Forge
       </div>
       <p className="text-emerald-400 font-mono tracking-widest text-sm animate-pulse">{messages[msgIndex]}</p>
-      <p className="text-xs text-gray-600 max-w-sm text-center">
+      <p className="text-xs text-gray-600 max-w-sm text-center px-4">
         Note: The backend is hosted on Render's free tier, which sleeps after 15 minutes of inactivity. Please allow up to a minute for the initial cold start!
       </p>
     </div>
@@ -84,15 +84,24 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-950 text-gray-100 p-8 font-sans">
-      <header className="mb-8 flex items-center justify-between">
+    <div className="min-h-screen bg-gray-950 text-gray-100 p-4 md:p-8 font-sans">
+      <header className="mb-8 flex flex-col md:flex-row md:items-center justify-between space-y-4 md:space-y-0">
         <div>
           <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-emerald-400">
             Forge Dashboard
           </h1>
           <p className="text-gray-400 text-sm mt-1">Real-time distributed task queue observability</p>
         </div>
-        <div className="flex items-center space-x-4">
+        <div className="flex flex-wrap items-center gap-3">
+          <a
+            href="https://viditpandey.in"
+            target="_blank"
+            rel="noreferrer"
+            className="flex items-center space-x-2 px-4 py-2 rounded-full text-sm font-medium shadow border transition-colors bg-blue-600 hover:bg-blue-500 border-blue-500 text-white"
+          >
+            <ExternalLink className="w-4 h-4" />
+            <span>Developer</span>
+          </a>
           <button
             onClick={handleSimulateLoad}
             disabled={isSimulating}
@@ -103,7 +112,7 @@ function App() {
             }`}
           >
             {isSimulating ? <Activity className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4" />}
-            <span>{isSimulating ? 'Simulating...' : 'Simulate Load'}</span>
+            <span>{isSimulating ? 'Simulating...' : 'Simulate'}</span>
           </button>
           <div className="flex items-center space-x-2 bg-gray-900 px-4 py-2 rounded-full shadow-inner border border-gray-800">
             <span className="relative flex h-3 w-3">
@@ -111,11 +120,11 @@ function App() {
               <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
             </span>
             <span className={`text-sm font-medium ${isConnected ? 'text-emerald-400' : 'text-amber-400'}`}>
-              {isConnected ? 'Live' : 'Reconnecting'}
+              {isConnected ? 'Live' : 'Offline'}
             </span>
           </div>
           <div className="bg-gray-900 px-4 py-2 rounded-full text-sm shadow-inner border border-gray-800">
-            Worker Utilisation: <span className="font-mono text-blue-400">{metrics.workerUtilisation}%</span>
+            Workers: <span className="font-mono text-blue-400">{metrics.workerUtilisation}%</span>
           </div>
         </div>
       </header>
