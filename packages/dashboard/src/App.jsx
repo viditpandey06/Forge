@@ -4,7 +4,7 @@ import { QueueDepthCard } from './components/QueueDepthCard';
 import { LatencyCard } from './components/LatencyCard';
 import { ThroughputChart } from './components/ThroughputChart';
 import { JobFeed } from './components/JobFeed';
-import { Activity } from 'lucide-react';
+import { Activity, Zap } from 'lucide-react';
 import './App.css';
 
 const socket = io('http://localhost:3000');
@@ -12,6 +12,22 @@ const socket = io('http://localhost:3000');
 function App() {
   const [metrics, setMetrics] = useState(null);
   const [isConnected, setIsConnected] = useState(socket.connected);
+  const [isSimulating, setIsSimulating] = useState(false);
+
+  const handleSimulateLoad = async () => {
+    setIsSimulating(true);
+    try {
+      await fetch('http://localhost:3000/jobs/bulk', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ count: 1000 })
+      });
+    } catch (err) {
+      console.error('Failed to simulate load:', err);
+    } finally {
+      setIsSimulating(false);
+    }
+  };
 
   useEffect(() => {
     const handleConnect = () => setIsConnected(true);
@@ -48,6 +64,18 @@ function App() {
           <p className="text-gray-400 text-sm mt-1">Real-time distributed task queue observability</p>
         </div>
         <div className="flex items-center space-x-4">
+          <button
+            onClick={handleSimulateLoad}
+            disabled={isSimulating}
+            className={`flex items-center space-x-2 px-4 py-2 rounded-full text-sm font-medium shadow border transition-colors ${
+              isSimulating 
+                ? 'bg-gray-800 border-gray-700 text-gray-400 cursor-not-allowed'
+                : 'bg-emerald-600 hover:bg-emerald-500 border-emerald-500 text-white'
+            }`}
+          >
+            {isSimulating ? <Activity className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4" />}
+            <span>{isSimulating ? 'Simulating...' : 'Simulate Load'}</span>
+          </button>
           <div className="flex items-center space-x-2 bg-gray-900 px-4 py-2 rounded-full shadow-inner border border-gray-800">
             <span className="relative flex h-3 w-3">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>

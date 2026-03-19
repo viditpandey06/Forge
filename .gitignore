@@ -17,9 +17,14 @@ pnpm-debug.log*
 forge-backend.log
 forge-dashboard.log
 
-# Private study notes
+# Private study notes & docs
 FORGE_STUDY_GUIDE.md
 SYSTEM_DESIGN_QA.rtf
+Forge_System_Design.docx
+TEAM_ONBOARDING.md
+*.docx
+*.rtf
+*.pdf
 
 # Build outputs
 dist/
